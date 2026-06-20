@@ -12,42 +12,29 @@
  */
 package org.openhab.automation.jrule.demo;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.openhab.automation.jrule.test.JRuleTestBase;
 import org.openhab.core.items.ItemNotFoundException;
-import org.openhab.core.items.events.ItemEventFactory;
 import org.openhab.core.library.items.StringItem;
 import org.openhab.core.library.items.SwitchItem;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.types.UnDefType;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TimerDemoRuleTest extends JRuleTestBase {
+public class TimerDemoRuleTest extends JRuleTestBase<TimerDemoRule> {
 
     @BeforeEach
     public void setup() throws ItemNotFoundException {
         registerItem(new SwitchItem(TimerDemoRule.TRIGGER_SWITCH), OnOffType.OFF);
         registerItem(new StringItem(TimerDemoRule.STATUS_ITEM), UnDefType.UNDEF);
-        eventCollector.clear();
     }
 
     @Test
     public void testTimerFiresStatusUpdate() {
-        initRule(TimerDemoRule.class);
-        fireEvents(false, List.of(ItemEventFactory.createStateChangedEvent(TimerDemoRule.TRIGGER_SWITCH, OnOffType.ON,
-                OnOffType.OFF, null, null)));
+        fireStateChanged(TimerDemoRule.TRIGGER_SWITCH, OnOffType.ON, OnOffType.OFF);
 
-        Awaitility.await().atMost(3, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> assertTrue(eventCollector.hasUpdateEvent(TimerDemoRule.STATUS_ITEM, "timer-fired"),
-                        "Expected 'timer-fired' update on status item after 1-second timer"));
+        assertUpdateSentEventually(TimerDemoRule.STATUS_ITEM, "timer-fired");
     }
 }
